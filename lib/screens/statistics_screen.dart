@@ -340,7 +340,7 @@ class _StatCard extends StatelessWidget {
             subtitle,
             style: const TextStyle(
               color: StatisticsScreen.mutedColor,
-              fontSize: 11,
+              fontSize: 10,
             ),
           ),
         ],
