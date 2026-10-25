@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 7),
                     const Text(
-                      'Բարև, Արեն',
+                      'Բարև, Արեն.',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
