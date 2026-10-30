@@ -12,131 +12,192 @@ class StatisticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completedToday = context.select<TaskProvider, int>(
-      (provider) => provider.completedToday,
-    );
+    final provider = context.watch<TaskProvider>();
 
-    final totalCompleted = context.select<TaskProvider, int>(
-      (provider) => provider.totalCompleted,
-    );
+    final totalCompleted = provider.totalCompleted;
+    final streak = provider.streak;
+    final weekCounts = provider.weekCounts;
+    final categoryTotals = provider.categoryTotals;
+    final productiveDay = provider.productiveDay;
 
-    final averageCompleted = context.select<TaskProvider, double>(
-      (provider) => provider.averageCompletedPerDay,
+    final totalTasks = categoryTotals.values.fold<int>(
+      0,
+      (sum, count) => sum + count,
     );
-
-    final completedThisWeek = context.select<TaskProvider, int>(
-      (provider) => provider.completedThisWeek,
-    );
-
-    final weekCounts = context.select<TaskProvider, List<int>>(
-      (provider) => provider.weekCounts,
-    );
-
-    final categoryCounts = context.select<TaskProvider, Map<TaskCategory, int>>(
-      (provider) => provider.categoryCounts,
-    );
-
-    final productiveDay = context.select<TaskProvider, String>(
-      (provider) => provider.productiveDay,
-    );
-
-    final goalProgress = (completedToday / dailyGoal).clamp(0.0, 1.0);
 
     final textColor = AppTheme.textColor(context);
     final mutedColor = AppTheme.mutedColor(context);
 
+    final todayIndex = DateTime.now().weekday - 1;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 25, 20, 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 15),
-
-          Text(
-            'Վիճակագրություն',
-            style: TextStyle(
-              color: textColor,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+          // HEADER
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor(context),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.maybePop(context);
+                  },
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: textColor,
+                    size: 19,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'Վիճակագրություն',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 28),
 
-          Text(
-            'Հետևիր քո առաջընթացին',
-            style: TextStyle(color: mutedColor, fontSize: 14),
+          // STAT CARDS
+          Row(
+            children: [
+              Expanded(
+                child: _statCard(
+                  context,
+                  title: 'ԸՆԴՀԱՆՈՒՐ\nԱՌԱՋԱԴՐԱՆՔՆԵՐ',
+                  value: '$totalCompleted',
+                  subtitle: 'ավարտված\nառաջադրանք',
+                  valueColor: textColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _statCard(
+                  context,
+                  title: 'ՇԱՐՈՒՆԱԿԱԿԱՆ\nԱԿՏԻՎՈՒԹՅՈՒՆ',
+                  value: '$streak օր',
+                  subtitle: 'առանց բաց թողնելու',
+                  valueColor: const Color(0xFFFFC15A),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 25),
-
-          _buildGoalCard(context, completedToday, goalProgress),
 
           const SizedBox(height: 20),
 
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  context,
-                  'Ընդհանուր',
-                  '$totalCompleted',
-                  Icons.check_circle_outline,
+          // WEEK CHART
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppTheme.cardColor(context),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppTheme.borderColor(context)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Այս շաբաթ',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Նպատակ՝ $dailyGoal/օր',
+                      style: TextStyle(
+                        color: AppTheme.green,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  context,
-                  'Այս շաբաթ',
-                  '$completedThisWeek',
-                  Icons.calendar_today_outlined,
+
+                const SizedBox(height: 22),
+
+                SizedBox(
+                  height: 155,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (index) {
+                      final count = weekCounts[index];
+
+                      final height = count == 0
+                          ? 8.0
+                          : (count / 8).clamp(0.12, 1.0) * 115;
+
+                      final isToday = index == todayIndex;
+
+                      const days = [
+                        'Երկ',
+                        'Երք',
+                        'Չրք',
+                        'Հնգ',
+                        'Ուրբ',
+                        'Շբթ',
+                        'Կիր',
+                      ];
+
+                      return Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const Spacer(),
+
+                            Container(
+                              width: 32,
+                              height: height,
+                              decoration: BoxDecoration(
+                                color: isToday
+                                    ? AppTheme.green
+                                    : AppTheme.green.withValues(alpha: 0.30),
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            Text(
+                              days[index],
+                              style: TextStyle(
+                                color: isToday ? textColor : mutedColor,
+                                fontSize: 11,
+                                fontWeight: isToday
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  context,
-                  'Օրվա միջին',
-                  averageCompleted.toStringAsFixed(1),
-                  Icons.trending_up,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  context,
-                  'Լավագույն օրը',
-                  productiveDay,
-                  Icons.star_outline,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 25),
-
-          Text(
-            'Շաբաթվա առաջընթացը',
-            style: TextStyle(
-              color: textColor,
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
+              ],
             ),
           ),
 
-          const SizedBox(height: 15),
+          const SizedBox(height: 28),
 
-          _buildWeekChart(context, weekCounts),
-
-          const SizedBox(height: 25),
-
+          // CATEGORY STATISTICS
           Text(
             'Ըստ կատեգորիաների',
             style: TextStyle(
@@ -146,89 +207,100 @@ class StatisticsScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
 
           ...TaskCategory.values.map((category) {
-            final count = categoryCounts[category] ?? 0;
-            return _buildCategoryRow(context, category, count);
+            final count = categoryTotals[category] ?? 0;
+
+            final percentage = totalTasks == 0 ? 0.0 : count / totalTasks;
+
+            return _categoryProgress(
+              context,
+              title: category.label,
+              count: count,
+              percentage: percentage,
+              color: category.color,
+              totalTasks: totalTasks,
+            );
           }),
+
+          const SizedBox(height: 22),
+
+          // MOTIVATION CARD
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppTheme.cardColor(context),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppTheme.borderColor(context)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.star_outline,
+                  color: Color(0xFFFFC15A),
+                  size: 28,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    totalCompleted == 0
+                        ? 'Սկսիր քո առաջին առաջադրանքից։ Ամեն փոքր քայլ կարևոր է։'
+                        : 'Ամենաարդյունավետ օրն է՝ $productiveDay։ Շարունակի՛ր նույն ոգով։',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildGoalCard(
-    BuildContext context,
-    int completedToday,
-    double progress,
-  ) {
+  // STAT CARD
+  Widget _statCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color valueColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 185,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppTheme.cardColor(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(23),
         border: Border.all(color: AppTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Օրվա նպատակը',
+            title,
             style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 17,
+              color: AppTheme.mutedColor(context),
+              fontSize: 11,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
 
-          const SizedBox(height: 10),
-
-          Text(
-            '$completedToday / $dailyGoal առաջադրանք',
-            style: TextStyle(color: AppTheme.mutedColor(context), fontSize: 14),
-          ),
-
-          const SizedBox(height: 15),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 10,
-              backgroundColor: AppTheme.borderColor(context),
-              valueColor: const AlwaysStoppedAnimation(AppTheme.green),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    BuildContext context,
-    String title,
-    String value,
-    IconData icon,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor(context),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderColor(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppTheme.green, size: 24),
-
-          const SizedBox(height: 12),
+          const Spacer(),
 
           Text(
             value,
             style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 19,
+              color: valueColor,
+              fontSize: 29,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -236,114 +308,65 @@ class StatisticsScreen extends StatelessWidget {
           const SizedBox(height: 5),
 
           Text(
-            title,
-            style: TextStyle(color: AppTheme.mutedColor(context), fontSize: 12),
+            subtitle,
+            style: TextStyle(
+              color: AppTheme.mutedColor(context),
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWeekChart(BuildContext context, List<int> weekCounts) {
-    const days = ['Երկ', 'Երք', 'Չրք', 'Հնգ', 'Ուրբ', 'Շբթ', 'Կիր'];
+  // CATEGORY PROGRESS
+  Widget _categoryProgress(
+    BuildContext context, {
+    required String title,
+    required int count,
+    required double percentage,
+    required Color color,
+    required int totalTasks,
+  }) {
+    final percent = (percentage * 100).round();
 
-    final maxCount = weekCounts.isEmpty
-        ? 1
-        : weekCounts.reduce((a, b) => a > b ? a : b).clamp(1, 1000000);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderColor(context)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(7, (index) {
-          final count = index < weekCounts.length ? weekCounts[index] : 0;
-
-          final height = 100.0 * count / maxCount;
-
-          return Column(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Text(
-                '$count',
-                style: TextStyle(
-                  color: AppTheme.mutedColor(context),
-                  fontSize: 11,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 8),
-
-              Container(
-                width: 22,
-                height: height < 5 ? 5 : height,
-                decoration: BoxDecoration(
-                  color: AppTheme.green,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
               Text(
-                days[index],
+                '$count · $percent%',
                 style: TextStyle(
                   color: AppTheme.mutedColor(context),
-                  fontSize: 10,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildCategoryRow(
-    BuildContext context,
-    TaskCategory category,
-    int count,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor(context),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppTheme.borderColor(context)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: category.color,
-              shape: BoxShape.circle,
-            ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(height: 10),
 
-          Expanded(
-            child: Text(
-              category.label,
-              style: TextStyle(
-                color: AppTheme.textColor(context),
-                fontSize: 14,
-              ),
-            ),
-          ),
-
-          Text(
-            '$count',
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontWeight: FontWeight.bold,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: percentage,
+              minHeight: 11,
+              backgroundColor: AppTheme.borderColor(context),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
         ],
