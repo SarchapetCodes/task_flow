@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_theme.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
 class ProgressCard extends StatelessWidget {
   const ProgressCard({
@@ -16,29 +15,30 @@ class ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AppTheme.textColor(context);
+    final mutedColor = AppTheme.mutedColor(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: AppTheme.cardColor(context),
         borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: AppTheme.borderColor(context)),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Օրվա առաջընթացը',
-                  style: TextStyle(color: AppTheme.muted),
+                  style: TextStyle(color: mutedColor),
                 ),
               ),
               Text(
                 '$done/$total',
-                style: const TextStyle(
-                  color: AppTheme.darkGreen,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -48,7 +48,7 @@ class ProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: AppTheme.border,
+              backgroundColor: AppTheme.borderColor(context),
               color: AppTheme.green,
             ),
           ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
 import '../models/task.dart';
 import '../providers/task_provider.dart';
-import '../theme/app_theme.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -78,6 +78,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AppTheme.textColor(context);
+    final mutedColor = AppTheme.mutedColor(context);
+
     return Padding(
       padding: EdgeInsets.only(
         top: 50,
@@ -85,9 +88,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceColor(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
         ),
         child: SafeArea(
           top: false,
@@ -100,7 +103,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     width: 38,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppTheme.border,
+                      color: AppTheme.borderColor(context),
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -110,32 +113,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Նոր առաջադրանք',
                         style: TextStyle(
                           fontSize: 21,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.darkGreen,
+                          color: textColor,
                         ),
                       ),
                     ),
-
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF25413D),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.close,
-                          color: Color(0xFFB5D4CE),
-                          size: 15,
-                        ),
-                      ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: mutedColor),
                     ),
                   ],
                 ),
@@ -181,12 +171,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         borderRadius: BorderRadius.circular(36),
                       ),
                       selectedColor: AppTheme.green,
-                      backgroundColor: AppTheme.background,
+                      backgroundColor: AppTheme.backgroundColor(context),
                       side: BorderSide(
-                        color: selected ? AppTheme.green : AppTheme.border,
+                        color: selected
+                            ? AppTheme.green
+                            : AppTheme.borderColor(context),
                       ),
                       labelStyle: TextStyle(
-                        color: selected ? AppTheme.background : AppTheme.muted,
+                        color: selected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : mutedColor,
                       ),
                       onSelected: (_) {
                         setState(() => category = item);
@@ -205,9 +199,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         icon: const Icon(Icons.calendar_month),
                         label: Text('${date.day}/${date.month}/${date.year}'),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color.fromARGB(255, 35, 72, 63),
-                            width: 1,
+                          foregroundColor: AppTheme.green,
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -224,9 +218,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         icon: const Icon(Icons.access_time),
                         label: Text(time.format(context)),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color.fromARGB(255, 35, 72, 63),
-                            width: 1,
+                          foregroundColor: AppTheme.green,
+                          side: BorderSide(
+                            color: AppTheme.borderColor(context),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -239,12 +233,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Հիշեցում'),
+                  title: Text('Հիշեցում', style: TextStyle(color: textColor)),
                   value: reminder,
-                  activeColor: AppTheme.green,
-                  trackOutlineColor: const WidgetStatePropertyAll(
-                    Color.fromARGB(255, 35, 72, 63),
-                  ),
+                  activeThumbColor: AppTheme.green,
                   onChanged: (value) {
                     setState(() => reminder = value);
                   },
@@ -259,7 +250,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     onPressed: saveTask,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.green,
-                      foregroundColor: AppTheme.background,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

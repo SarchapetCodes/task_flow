@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
 import '../models/task.dart';
-import '../theme/app_theme.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({super.key, required this.task, required this.onToggle});
@@ -12,11 +12,17 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AppTheme.textColor(context);
+    final mutedColor = AppTheme.mutedColor(context);
+    final cardColor = AppTheme.cardColor(context);
+    final borderColor = AppTheme.borderColor(context);
+
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: cardColor,
         borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
@@ -29,16 +35,16 @@ class TaskCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: task.isDone ? AppTheme.green : Colors.transparent,
                 border: Border.all(
-                  color: task.isDone ? AppTheme.green : AppTheme.muted,
+                  color: task.isDone ? AppTheme.green : mutedColor,
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(5),
               ),
               child: task.isDone
-                  ? const Icon(
+                  ? Icon(
                       Icons.check,
                       size: 15,
-                      color: AppTheme.background,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     )
                   : null,
             ),
@@ -53,7 +59,7 @@ class TaskCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: task.isDone ? AppTheme.muted : AppTheme.darkGreen,
+                    color: task.isDone ? mutedColor : textColor,
                     decoration: task.isDone
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
@@ -63,7 +69,7 @@ class TaskCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     task.note,
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 11),
+                    style: TextStyle(color: mutedColor, fontSize: 11),
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -82,19 +88,16 @@ class TaskCard extends StatelessWidget {
                       ),
                       child: Text(
                         task.category.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: AppTheme.background,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
                       DateFormat('HH:mm').format(task.dateTime),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.muted,
-                      ),
+                      style: TextStyle(fontSize: 10, color: mutedColor),
                     ),
                     if (task.reminder)
                       const Icon(

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
+import '../models/task.dart';
 import '../providers/task_provider.dart';
-import '../theme/app_theme.dart';
+import '../providers/user_provider.dart';
 import '../widgets/progress_card.dart';
 import '../widgets/task_card.dart';
 import '../widgets/task_filter.dart';
@@ -13,8 +15,32 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TaskProvider>();
-    final tasks = provider.visibleTasks;
+    final tasks = context.select<TaskProvider, List<TaskItem>>(
+      (provider) => provider.visibleTasks,
+    );
+
+    final completedToday = context.select<TaskProvider, int>(
+      (provider) => provider.completedToday,
+    );
+
+    final totalToday = context.select<TaskProvider, int>(
+      (provider) => provider.totalToday,
+    );
+
+    final progress = context.select<TaskProvider, double>(
+      (provider) => provider.progress,
+    );
+
+    final filter = context.select<TaskProvider, TaskFilter>(
+      (provider) => provider.filter,
+    );
+
+    final userName = context.select<UserProvider, String>(
+      (provider) => provider.name,
+    );
+
+    final textColor = AppTheme.textColor(context);
+    final mutedColor = AppTheme.mutedColor(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -29,54 +55,60 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       DateFormat('EEEE, d MMMM', 'hy').format(DateTime.now()),
-                      style: const TextStyle(
-                        color: AppTheme.muted,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: mutedColor, fontSize: 12),
                     ),
                     const SizedBox(height: 7),
-                    const Text(
-                      'Բարև, Արեն',
+                    Text(
+                      'Բարև, $userName',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.darkGreen,
+                        color: textColor,
                       ),
                     ),
                   ],
                 ),
               ),
-              const CircleAvatar(
-                backgroundColor: AppTheme.card,
-                child: Text('Ա', style: TextStyle(color: AppTheme.green)),
+              CircleAvatar(
+                backgroundColor: AppTheme.cardColor(context),
+                child: Text(
+                  userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppTheme.green),
+                ),
               ),
             ],
           ),
+
           const SizedBox(height: 22),
 
           ProgressCard(
-            done: provider.completedToday,
-            total: provider.totalToday,
-            progress: provider.progress,
+            done: completedToday,
+            total: totalToday,
+            progress: progress,
           ),
 
           const SizedBox(height: 16),
 
-          TaskFilterBar(value: provider.filter, onChanged: provider.setFilter),
+          TaskFilterBar(
+            value: filter,
+            onChanged: (value) {
+              context.read<TaskProvider>().setFilter(value);
+            },
+          ),
 
           const SizedBox(height: 16),
 
           Expanded(
             child: tasks.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'Գործ չկա',
-                      style: TextStyle(color: AppTheme.muted, fontSize: 16),
+                      style: TextStyle(color: mutedColor, fontSize: 16),
                     ),
                   )
                 : ListView.separated(
                     itemCount: tasks.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final task = tasks[index];
 
@@ -96,12 +128,12 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         onDismissed: (_) {
-                          provider.deleteTask(task.id);
+                          context.read<TaskProvider>().deleteTask(task.id);
                         },
                         child: TaskCard(
                           task: task,
                           onToggle: () {
-                            provider.toggleTask(task.id);
+                            context.read<TaskProvider>().toggleTask(task.id);
                           },
                         ),
                       );

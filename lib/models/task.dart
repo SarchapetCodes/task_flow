@@ -31,7 +31,7 @@ extension CategoryInfo on TaskCategory {
 }
 
 class TaskItem {
-  TaskItem({
+  const TaskItem({
     required this.id,
     required this.title,
     this.note = '',
@@ -48,7 +48,59 @@ class TaskItem {
   final TaskCategory category;
   final DateTime dateTime;
   final bool reminder;
+  final bool isDone;
+  final DateTime? completedAt;
 
-  bool isDone;
-  DateTime? completedAt;
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'note': note,
+      'category': category.name,
+      'dateTime': dateTime.toIso8601String(),
+      'reminder': reminder,
+      'isDone': isDone,
+      'completedAt': completedAt?.toIso8601String(),
+    };
+  }
+
+  factory TaskItem.fromJson(Map<String, dynamic> json) {
+    return TaskItem(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      note: json['note'] as String? ?? '',
+      category: TaskCategory.values.firstWhere(
+        (category) => category.name == json['category'],
+        orElse: () => TaskCategory.other,
+      ),
+      dateTime: DateTime.parse(json['dateTime'] as String),
+      reminder: json['reminder'] as bool? ?? false,
+      isDone: json['isDone'] as bool? ?? false,
+      completedAt: json['completedAt'] == null
+          ? null
+          : DateTime.parse(json['completedAt'] as String),
+    );
+  }
+
+  TaskItem copyWith({
+    String? title,
+    String? note,
+    TaskCategory? category,
+    DateTime? dateTime,
+    bool? reminder,
+    bool? isDone,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
+  }) {
+    return TaskItem(
+      id: id,
+      title: title ?? this.title,
+      note: note ?? this.note,
+      category: category ?? this.category,
+      dateTime: dateTime ?? this.dateTime,
+      reminder: reminder ?? this.reminder,
+      isDone: isDone ?? this.isDone,
+      completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
+    );
+  }
 }

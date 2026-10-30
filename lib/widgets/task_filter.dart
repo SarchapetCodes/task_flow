@@ -31,22 +31,21 @@ class TaskFilterBar extends StatelessWidget {
           label: Text(labels[filter]!),
           selected: selected,
           showCheckmark: false,
-
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-
           selectedColor: AppTheme.green,
-          backgroundColor: AppTheme.background,
-
-          side: BorderSide(color: selected ? AppTheme.green : AppTheme.border),
-
+          backgroundColor: AppTheme.backgroundColor(context),
+          side: BorderSide(
+            color: selected ? AppTheme.green : AppTheme.borderColor(context),
+          ),
           labelStyle: TextStyle(
-            color: selected ? AppTheme.background : AppTheme.muted,
+            color: selected
+                ? Theme.of(context).colorScheme.onPrimary
+                : AppTheme.mutedColor(context),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
-
           onSelected: (_) => onChanged(filter),
         );
       }).toList(),

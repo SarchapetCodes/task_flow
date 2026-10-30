@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_theme.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({
@@ -22,7 +21,7 @@ class BottomNavBar extends StatelessWidget {
         icon: Icon(
           icon,
           size: 21,
-          color: index == i ? AppTheme.green : AppTheme.muted,
+          color: index == i ? AppTheme.green : AppTheme.mutedColor(context),
         ),
       );
     }
@@ -33,8 +32,9 @@ class BottomNavBar extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(18, 0, 18, 10),
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.card,
+          color: AppTheme.cardColor(context),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.borderColor(context)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -50,9 +50,9 @@ class BottomNavBar extends StatelessWidget {
               ),
               child: IconButton(
                 onPressed: onAdd,
-                icon: const Icon(
+                icon: Icon(
                   Icons.add,
-                  color: AppTheme.background,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   size: 27,
                 ),
               ),

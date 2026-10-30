@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:task_flow/screens/profile_screen.dart';
+import 'package:provider/provider.dart';
 
+import 'package:task_flow/screens/profile_screen.dart';
+import 'package:task_flow/theme/app_theme.dart';
+
+import '../providers/task_provider.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'add_task_screen.dart';
 import 'calendar_screen.dart';
@@ -36,6 +40,19 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoaded = context.select<TaskProvider, bool>(
+      (provider) => provider.isLoaded,
+    );
+
+    if (!isLoaded) {
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor(context),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppTheme.green),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: IndexedStack(index: currentIndex, children: screens),

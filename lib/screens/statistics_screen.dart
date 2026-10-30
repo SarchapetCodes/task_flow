@@ -1,335 +1,234 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:task_flow/models/task.dart';
+import 'package:task_flow/theme/app_theme.dart';
 
+import '../models/task.dart';
 import '../providers/task_provider.dart';
 
 class StatisticsScreen extends StatelessWidget {
   const StatisticsScreen({super.key});
 
-  static const Color background = Color(0xFF0B201D);
-  static const Color cardColor = Color(0xFF14352F);
-  static const Color mutedColor = Color(0xFF8CB6AA);
-  static const Color mintColor = Color(0xFF50D1B2);
-
-  static const List<String> days = [
-    'Երկ',
-    'Երք',
-    'Չոր',
-    'Հնգ',
-    'Ուրբ',
-    'Շաբ',
-    'Կիր',
-  ];
+  static const int dailyGoal = 5;
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TaskProvider>();
-    final week = provider.weekCounts;
-    final today = DateTime.now();
-
-    final maxCount = week.fold<int>(
-      1,
-      (max, value) => value > max ? value : max,
+    final completedToday = context.select<TaskProvider, int>(
+      (provider) => provider.completedToday,
     );
 
-    return Scaffold(
-      backgroundColor: background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final totalCompleted = context.select<TaskProvider, int>(
+      (provider) => provider.totalCompleted,
+    );
+
+    final averageCompleted = context.select<TaskProvider, double>(
+      (provider) => provider.averageCompletedPerDay,
+    );
+
+    final completedThisWeek = context.select<TaskProvider, int>(
+      (provider) => provider.completedThisWeek,
+    );
+
+    final weekCounts = context.select<TaskProvider, List<int>>(
+      (provider) => provider.weekCounts,
+    );
+
+    final categoryCounts = context.select<TaskProvider, Map<TaskCategory, int>>(
+      (provider) => provider.categoryCounts,
+    );
+
+    final productiveDay = context.select<TaskProvider, String>(
+      (provider) => provider.productiveDay,
+    );
+
+    final goalProgress = (completedToday / dailyGoal).clamp(0.0, 1.0);
+
+    final textColor = AppTheme.textColor(context);
+    final mutedColor = AppTheme.mutedColor(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 15),
+
+          Text(
+            'Վիճակագրություն',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            'Հետևիր քո առաջընթացին',
+            style: TextStyle(color: mutedColor, fontSize: 14),
+          ),
+
+          const SizedBox(height: 25),
+
+          _buildGoalCard(context, completedToday, goalProgress),
+
+          const SizedBox(height: 20),
+
+          Row(
             children: [
-              const Text(
-                'Վիճակագրություն',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  'Ընդհանուր',
+                  '$totalCompleted',
+                  Icons.check_circle_outline,
                 ),
               ),
-
-              const SizedBox(height: 22),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      title: 'Շաբաթվա\nընթացքում',
-                      value: '${provider.completedThisWeek}',
-                      subtitle: 'Ավարտած\nառաջադրանք',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      title: 'Շարք',
-                      value: '${provider.streak} օր',
-                      subtitle: 'Անընդմեջ օրերի\nշարք',
-                      highlight: true,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(19),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Այս շաբաթ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Նպատակ՝ 5/օր',
-                          style: TextStyle(color: mutedColor, fontSize: 10),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    SizedBox(
-                      height: 150,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: List.generate(7, (index) {
-                          final day = provider.weekStart.add(
-                            Duration(days: index),
-                          );
-
-                          final count = week[index];
-
-                          final isToday =
-                              day.year == today.year &&
-                              day.month == today.month &&
-                              day.day == today.day;
-
-                          final height = count == 0
-                              ? 5.0
-                              : 85.0 * count / maxCount;
-
-                          return Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '$count',
-                                  style: TextStyle(
-                                    color: isToday ? mintColor : mutedColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 5),
-
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: Container(
-                                      height: height,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isToday
-                                            ? mintColor
-                                            : const Color(0xFF32685C),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                Text(
-                                  days[index],
-                                  style: TextStyle(
-                                    color: isToday ? Colors.white : mutedColor,
-                                    fontSize: 10,
-                                    fontWeight: isToday
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                'Ըստ կատեգորիաների',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              ...TaskCategory.values.map((category) {
-                final count = provider.categoryCounts[category] ?? 0;
-
-                final total = provider.categoryTotals[category] ?? 0;
-
-                final progress = total == 0 ? 0.0 : count / total;
-
-                final percentage = (progress * 100).round();
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 19),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              category.label,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-
-                          Text(
-                            '$count · $percentage%',
-                            style: TextStyle(
-                              color: mutedColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: progress.clamp(0.0, 1.0),
-                          minHeight: 6,
-                          backgroundColor: const Color(0xFF244941),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            category.color,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-
-              const SizedBox(height: 2),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(13),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D2923),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.star_outline,
-                      color: Color(0xFFFFC857),
-                      size: 23,
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: Text(
-                        'Ամենաարդյունավետ օրը՝\n'
-                        '${provider.productiveDay}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  'Այս շաբաթ',
+                  '$completedThisWeek',
+                  Icons.calendar_today_outlined,
                 ),
               ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  'Օրվա միջին',
+                  averageCompleted.toStringAsFixed(1),
+                  Icons.trending_up,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  'Լավագույն օրը',
+                  productiveDay,
+                  Icons.star_outline,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 25),
+
+          Text(
+            'Շաբաթվա առաջընթացը',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          _buildWeekChart(context, weekCounts),
+
+          const SizedBox(height: 25),
+
+          Text(
+            'Ըստ կատեգորիաների',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          ...TaskCategory.values.map((category) {
+            final count = categoryCounts[category] ?? 0;
+            return _buildCategoryRow(context, category, count);
+          }),
+        ],
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    this.highlight = false,
-  });
-
-  final String title;
-  final String value;
-  final String subtitle;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildGoalCard(
+    BuildContext context,
+    int completedToday,
+    double progress,
+  ) {
     return Container(
-      height: 130,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: StatisticsScreen.cardColor,
-        borderRadius: BorderRadius.circular(17),
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFF8DCDBB),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+            'Օրվա նպատակը',
+            style: TextStyle(
+              color: AppTheme.textColor(context),
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
             ),
           ),
 
-          const Spacer(),
+          const SizedBox(height: 10),
+
+          Text(
+            '$completedToday / $dailyGoal առաջադրանք',
+            style: TextStyle(color: AppTheme.mutedColor(context), fontSize: 14),
+          ),
+
+          const SizedBox(height: 15),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: AppTheme.borderColor(context),
+              valueColor: const AlwaysStoppedAnimation(AppTheme.green),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderColor(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppTheme.green, size: 24),
+
+          const SizedBox(height: 12),
 
           Text(
             value,
             style: TextStyle(
-              color: highlight ? const Color(0xFFFFC857) : Colors.white,
-              fontSize: 25,
+              color: AppTheme.textColor(context),
+              fontSize: 19,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -337,10 +236,114 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 5),
 
           Text(
-            subtitle,
-            style: const TextStyle(
-              color: StatisticsScreen.mutedColor,
-              fontSize: 10,
+            title,
+            style: TextStyle(color: AppTheme.mutedColor(context), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeekChart(BuildContext context, List<int> weekCounts) {
+    const days = ['Երկ', 'Երք', 'Չրք', 'Հնգ', 'Ուրբ', 'Շբթ', 'Կիր'];
+
+    final maxCount = weekCounts.isEmpty
+        ? 1
+        : weekCounts.reduce((a, b) => a > b ? a : b).clamp(1, 1000000);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderColor(context)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(7, (index) {
+          final count = index < weekCounts.length ? weekCounts[index] : 0;
+
+          final height = 100.0 * count / maxCount;
+
+          return Column(
+            children: [
+              Text(
+                '$count',
+                style: TextStyle(
+                  color: AppTheme.mutedColor(context),
+                  fontSize: 11,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Container(
+                width: 22,
+                height: height < 5 ? 5 : height,
+                decoration: BoxDecoration(
+                  color: AppTheme.green,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                days[index],
+                style: TextStyle(
+                  color: AppTheme.mutedColor(context),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildCategoryRow(
+    BuildContext context,
+    TaskCategory category,
+    int count,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(context),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppTheme.borderColor(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: category.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              category.label,
+              style: TextStyle(
+                color: AppTheme.textColor(context),
+                fontSize: 14,
+              ),
+            ),
+          ),
+
+          Text(
+            '$count',
+            style: TextStyle(
+              color: AppTheme.textColor(context),
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
